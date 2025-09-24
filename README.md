@@ -74,7 +74,7 @@ When `BrotliSuffix` is set:
 - If the compressed version doesn't exist, it falls back to the original file
 - Files explicitly requested with the suffix (e.g., `/static/app.js.br`) are served with Brotli encoding
 
-When `BrotliSuffix` is empty (default), no Brotli compression is attempted.
+When `BrotliSuffix` is empty (default), the server will not attempt to discover Brotli compressed versions of requested files.
 
 ### Custom Error Handling
 

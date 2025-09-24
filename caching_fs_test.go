@@ -99,9 +99,9 @@ func TestFSLoader(t *testing.T) {
 	})
 }
 
-func TestNewCachingFS(t *testing.T) {
+func TestNewDefaultCachingFS(t *testing.T) {
 	t.Run("Valid filesystem", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 		assert.NotNil(t, cfs)
 		assert.NotNil(t, cfs.fs)
@@ -109,7 +109,7 @@ func TestNewCachingFS(t *testing.T) {
 	})
 
 	t.Run("Nil filesystem", func(t *testing.T) {
-		cfs, err := NewCachingFS(nil)
+		cfs, err := NewDefaultCachingFS(nil)
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, ErrNilFS))
 		assert.Nil(t, cfs)
@@ -118,7 +118,7 @@ func TestNewCachingFS(t *testing.T) {
 
 func TestCachingFS_ReadFile(t *testing.T) {
 	t.Run("Read existing file", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("cached.txt")
@@ -127,7 +127,7 @@ func TestCachingFS_ReadFile(t *testing.T) {
 	})
 
 	t.Run("Read non-existent file", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("nonexistent.txt")
@@ -137,7 +137,7 @@ func TestCachingFS_ReadFile(t *testing.T) {
 	})
 
 	t.Run("Read nested file", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("nested/file.js")
@@ -146,7 +146,7 @@ func TestCachingFS_ReadFile(t *testing.T) {
 	})
 
 	t.Run("Caching behavior - multiple reads", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		// First read
@@ -161,7 +161,7 @@ func TestCachingFS_ReadFile(t *testing.T) {
 	})
 
 	t.Run("Multiple different files", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		data1, err := cfs.ReadFile("cached.txt")
@@ -180,7 +180,7 @@ func TestCachingFS_ReadFile(t *testing.T) {
 
 func TestCachingFS_Open(t *testing.T) {
 	t.Run("Open bypasses cache", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		file, err := cfs.Open("cached.txt")
@@ -197,7 +197,7 @@ func TestCachingFS_Open(t *testing.T) {
 	})
 
 	t.Run("Open non-existent file", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		file, err := cfs.Open("nonexistent.txt")
@@ -219,9 +219,9 @@ func TestCachingFS_InterfaceCompliance(t *testing.T) {
 
 func TestCachingFS_Constants(t *testing.T) {
 	t.Run("Default constants are reasonable", func(t *testing.T) {
-		assert.Equal(t, 1000, defaultCacheSize)
-		assert.Equal(t, 100, defaultInitialCapacity)
-		assert.True(t, defaultInitialCapacity <= defaultCacheSize)
+		assert.Equal(t, 1000, DefaultMaxEntries)
+		assert.Equal(t, 100, DefaultInitialCapacity)
+		assert.True(t, DefaultInitialCapacity <= DefaultMaxEntries)
 	})
 }
 
@@ -276,7 +276,7 @@ func TestFSLoader_ErrorHandling(t *testing.T) {
 
 func TestCachingFS_ErrorHandling(t *testing.T) {
 	t.Run("otter.ErrNotFound is converted to fs.ErrNotExist", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("nonexistent.txt")
@@ -286,7 +286,7 @@ func TestCachingFS_ErrorHandling(t *testing.T) {
 	})
 
 	t.Run("Other errors from underlying filesystem are passed through", func(t *testing.T) {
-		cfs, err := NewCachingFS(errorFS{})
+		cfs, err := NewDefaultCachingFS(errorFS{})
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("permission_error")
@@ -299,7 +299,7 @@ func TestCachingFS_ErrorHandling(t *testing.T) {
 // Additional edge case tests
 func TestCachingFS_EdgeCases(t *testing.T) {
 	t.Run("Empty file path", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("")
@@ -311,7 +311,7 @@ func TestCachingFS_EdgeCases(t *testing.T) {
 		testFS := fstest.MapFS{
 			"file with spaces.txt": &fstest.MapFile{Data: []byte("spaced content")},
 		}
-		cfs, err := NewCachingFS(testFS)
+		cfs, err := NewDefaultCachingFS(testFS)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("file with spaces.txt")
@@ -323,7 +323,7 @@ func TestCachingFS_EdgeCases(t *testing.T) {
 		testFS := fstest.MapFS{
 			"file@#$%^&*().txt": &fstest.MapFile{Data: []byte("special chars")},
 		}
-		cfs, err := NewCachingFS(testFS)
+		cfs, err := NewDefaultCachingFS(testFS)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("file@#$%^&*().txt")
@@ -335,7 +335,7 @@ func TestCachingFS_EdgeCases(t *testing.T) {
 		testFS := fstest.MapFS{
 			"empty.txt": &fstest.MapFile{Data: []byte("")},
 		}
-		cfs, err := NewCachingFS(testFS)
+		cfs, err := NewDefaultCachingFS(testFS)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("empty.txt")
@@ -352,7 +352,7 @@ func TestCachingFS_EdgeCases(t *testing.T) {
 		testFS := fstest.MapFS{
 			"large.bin": &fstest.MapFile{Data: largeContent},
 		}
-		cfs, err := NewCachingFS(testFS)
+		cfs, err := NewDefaultCachingFS(testFS)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("large.bin")
@@ -366,7 +366,7 @@ func TestCachingFS_EdgeCases(t *testing.T) {
 		testFS := fstest.MapFS{
 			"binary.bin": &fstest.MapFile{Data: binaryData},
 		}
-		cfs, err := NewCachingFS(testFS)
+		cfs, err := NewDefaultCachingFS(testFS)
 		require.NoError(t, err)
 
 		data, err := cfs.ReadFile("binary.bin")
@@ -375,7 +375,7 @@ func TestCachingFS_EdgeCases(t *testing.T) {
 	})
 
 	t.Run("Path traversal attempts", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		// These should all fail - the underlying fstest.MapFS should reject them
@@ -397,7 +397,7 @@ func TestCachingFS_EdgeCases(t *testing.T) {
 // Test concurrent access
 func TestCachingFS_Concurrency(t *testing.T) {
 	t.Run("Concurrent reads of same file", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		const numGoroutines = 100
@@ -439,7 +439,7 @@ func TestCachingFS_Concurrency(t *testing.T) {
 	})
 
 	t.Run("Concurrent reads of different files", func(t *testing.T) {
-		cfs, err := NewCachingFS(cachingTestFiles)
+		cfs, err := NewDefaultCachingFS(cachingTestFiles)
 		require.NoError(t, err)
 
 		files := []string{"cached.txt", "test.css", "large.js", "nested/file.js"}
@@ -507,17 +507,17 @@ func TestCachingFS_CacheStress(t *testing.T) {
 	t.Run("Cache fills up beyond capacity", func(t *testing.T) {
 		// Create many files to exceed cache capacity
 		manyFiles := make(fstest.MapFS)
-		for i := 0; i < defaultCacheSize*2; i++ {
+		for i := 0; i < DefaultMaxEntries*2; i++ {
 			filename := fmt.Sprintf("file%d.txt", i)
 			content := fmt.Sprintf("content of file %d", i)
 			manyFiles[filename] = &fstest.MapFile{Data: []byte(content)}
 		}
 
-		cfs, err := NewCachingFS(manyFiles)
+		cfs, err := NewDefaultCachingFS(manyFiles)
 		require.NoError(t, err)
 
 		// Read all files - should work despite exceeding cache capacity
-		for i := 0; i < defaultCacheSize*2; i++ {
+		for i := 0; i < DefaultMaxEntries*2; i++ {
 			filename := fmt.Sprintf("file%d.txt", i)
 			expectedContent := fmt.Sprintf("content of file %d", i)
 

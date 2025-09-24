@@ -83,7 +83,7 @@ func BenchmarkOnDiskFSWithCaching(b *testing.B) {
 	tempDir := setupBenchmarkAssets(b)
 	defer os.RemoveAll(tempDir)
 
-	cachingFS, err := NewCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
+	cachingFS, err := NewDefaultCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func BenchmarkOnDiskFSWithCaching(b *testing.B) {
 }
 
 func BenchmarkEmbedFSWithCaching(b *testing.B) {
-	cachingFS, err := NewCachingFS(benchmarkAssets)
+	cachingFS, err := NewDefaultCachingFS(benchmarkAssets)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func BenchmarkMultipleFileAccess_OnDiskCached(b *testing.B) {
 	tempDir := setupBenchmarkAssets(b)
 	defer os.RemoveAll(tempDir)
 
-	cachingFS, err := NewCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
+	cachingFS, err := NewDefaultCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -214,7 +214,7 @@ func BenchmarkMultipleFileAccess_OnDiskCached(b *testing.B) {
 }
 
 func BenchmarkMultipleFileAccess_EmbedFSCached(b *testing.B) {
-	cachingFS, err := NewCachingFS(benchmarkAssets)
+	cachingFS, err := NewDefaultCachingFS(benchmarkAssets)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -265,7 +265,7 @@ func BenchmarkRepeatedFileAccess_Cached(b *testing.B) {
 	tempDir := setupBenchmarkAssets(b)
 	defer os.RemoveAll(tempDir)
 
-	cachingFS, err := NewCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
+	cachingFS, err := NewDefaultCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -313,7 +313,7 @@ func BenchmarkLargeFileAccess_Cached(b *testing.B) {
 	tempDir := setupBenchmarkAssets(b)
 	defer os.RemoveAll(tempDir)
 
-	cachingFS, err := NewCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
+	cachingFS, err := NewDefaultCachingFS(&wrappedDirFS{fs: os.DirFS(tempDir)})
 	if err != nil {
 		b.Fatal(err)
 	}

@@ -8,8 +8,8 @@ import (
 	"github.com/maypok86/otter/v2"
 )
 
-const defaultCacheSize = 1000
-const defaultInitialCapacity = 100
+const DefaultMaxEntries = 1000
+const DefaultInitialCapacity = 100
 
 // FSLoader implements otter.Loader
 type FSLoader struct {
@@ -37,6 +37,11 @@ func (loader *FSLoader) Reload(ctx context.Context, filePath string, data []byte
 
 var _ otter.Loader[string, []byte] = (*FSLoader)(nil)
 
+type CachingFSOption struct {
+	MaxEntryCount   int
+	InitialCapacity int
+}
+
 // CachingFS uses a pull-through otter.Cache to minimize IO calls
 type CachingFS struct {
 	fs    *FSLoader
@@ -45,8 +50,18 @@ type CachingFS struct {
 
 var _ fs.ReadFileFS = (*CachingFS)(nil)
 
+// NewDefaultCachingFS creates a new CachingFS instance with max cache size
+// and initial capacity set to `DefaultMaxEntries` and `DefaultInitialCapacity`
+// Use NewCachingFS if different values are desired.
+func NewDefaultCachingFS(baseFS fs.ReadFileFS) (*CachingFS, error) {
+	return NewCachingFS(baseFS, &CachingFSOption{
+		MaxEntryCount: DefaultMaxEntries,
+		InitialCapacity: DefaultInitialCapacity,
+	})
+}
+
 // NewCachingFS creates a new CachingFS instance
-func NewCachingFS(baseFS fs.ReadFileFS) (*CachingFS, error) {
+func NewCachingFS(baseFS fs.ReadFileFS, option *CachingFSOption) (*CachingFS, error) {
 	if baseFS == nil {
 		return nil, ErrNilFS
 	}
@@ -54,8 +69,16 @@ func NewCachingFS(baseFS fs.ReadFileFS) (*CachingFS, error) {
 		files: baseFS,
 	}
 	var options otter.Options[string, []byte]
-	options.MaximumSize = defaultCacheSize
-	options.InitialCapacity = defaultInitialCapacity
+	options.MaximumSize = DefaultMaxEntries
+	options.InitialCapacity = DefaultInitialCapacity
+	if option != nil {
+		if option.MaxEntryCount > 0 {
+			options.MaximumSize = option.MaxEntryCount
+		}
+		if option.InitialCapacity > 0 {
+			options.InitialCapacity = option.InitialCapacity
+		}
+	}
 	cache, err := otter.New(&options)
 	if err != nil {
 		return nil, err
